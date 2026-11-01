@@ -3,16 +3,20 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 MAX_FILE_BYTES = 2 * 1024 * 1024
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", "dist", "build"}
 PATTERNS = {
-    "private_key_header": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+    "private_key_header": re.compile(
+        r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"
+    ),
     "aws_access_key_candidate": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     "github_token_candidate": re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
-    "generic_assignment_candidate": re.compile(r"""(?i)\b(?:api[_-]?key|secret|password|token)\s*[:=]\s*["']?([^\s"'#]{12,})"""),
+    "generic_assignment_candidate": re.compile(
+        r"""(?i)\b(?:api[_-]?key|secret|password|token)\s*[:=]\s*["']?([^\s"'#]{12,})"""
+    ),
 }
 
 
@@ -45,12 +49,16 @@ def scan(root: str | Path) -> list[dict[str, object]]:
         for line_no, line in enumerate(text.splitlines(), 1):
             for rule, pattern in PATTERNS.items():
                 for match in pattern.finditer(line):
-                    candidate = match.group(1) if rule == "generic_assignment_candidate" and match.lastindex else match.group(0)
+                    if rule == "generic_assignment_candidate" and match.lastindex:
+                        candidate = match.group(1)
+                    else:
+                        candidate = match.group(0)
+                    relative = path.relative_to(base).as_posix()
                     findings.append({
-                        "id": f"secret-candidate:{path.relative_to(base).as_posix()}:{line_no}:{rule}",
+                        "id": f"secret-candidate:{relative}:{line_no}:{rule}",
                         "type": "secret_candidate",
                         "rule": rule,
-                        "path": path.relative_to(base).as_posix(),
+                        "path": relative,
                         "line": line_no,
                         "evidence": "[REDACTED]",
                         "candidate_length": len(candidate),
