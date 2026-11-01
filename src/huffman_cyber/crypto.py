@@ -1,4 +1,4 @@
-"""Authenticated encryption and Ed25519 signatures via pyca/cryptography."""
+"""Authenticated encryption and encrypted Ed25519 key handling."""
 from __future__ import annotations
 
 import base64
@@ -51,22 +51,46 @@ def decrypt_bytes(envelope: bytes, password: bytes) -> bytes:
     return AESGCM(key).decrypt(nonce, envelope[header_len:], header)
 
 
-def generate_ed25519(private_path: str | Path, public_path: str | Path) -> None:
+def generate_ed25519(
+    private_path: str | Path, public_path: str | Path, password: bytes
+) -> None:
+    if len(password) < 12:
+        raise ValueError("key-encryption passphrase must contain at least 12 bytes")
+    private_file, public_file = Path(private_path), Path(public_path)
+    if private_file.resolve() == public_file.resolve():
+        raise ValueError("private and public key paths must be different")
+    if private_file.exists() or public_file.exists():
+        raise FileExistsError("refusing to overwrite an existing key file")
     private = Ed25519PrivateKey.generate()
-    Path(private_path).write_bytes(private.private_bytes(
-        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
-    ))
-    Path(public_path).write_bytes(private.public_key().public_bytes(
-        serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
-    ))
+    private_bytes = private.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.BestAvailableEncryption(password),
+    )
+    public_bytes = private.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    with private_file.open("xb") as stream:
+        stream.write(private_bytes)
     try:
-        os.chmod(private_path, 0o600)
+        with public_file.open("xb") as stream:
+            stream.write(public_bytes)
+    except Exception:
+        private_file.unlink(missing_ok=True)
+        raise
+    try:
+        os.chmod(private_file, 0o600)
     except OSError:
         pass
 
 
-def sign_file(private_path: str | Path, data_path: str | Path, output_path: str | Path) -> None:
-    private = serialization.load_pem_private_key(Path(private_path).read_bytes(), password=None)
+def sign_file(
+    private_path: str | Path, data_path: str | Path, output_path: str | Path, password: bytes
+) -> None:
+    private = serialization.load_pem_private_key(
+        Path(private_path).read_bytes(), password=password
+    )
     if not isinstance(private, Ed25519PrivateKey):
         raise ValueError("private key is not Ed25519")
     payload = Path(data_path).read_bytes()
