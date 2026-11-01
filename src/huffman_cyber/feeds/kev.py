@@ -17,7 +17,8 @@ def fetch_kev(timeout: float = 20.0) -> dict[str, Any]:
         FEED_URL,
         headers={"User-Agent": "HuffmanCyberObservatory/0.1 (+defensive-security)"},
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    # The URL is a fixed, code-owned HTTPS endpoint, not user-supplied input.
+    with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
         if response.status != 200:
             raise RuntimeError(f"CISA feed returned HTTP {response.status}")
         raw = response.read(MAX_FEED_BYTES + 1)
