@@ -7,11 +7,13 @@ def test_load_cyclonedx_inventory(tmp_path):
     source = tmp_path / "bom.json"
     source.write_text(json.dumps({
         "bomFormat": "CycloneDX",
-        "components": [{"name": "demo", "version": "1.2", "purl": "pkg:pypi/demo@1.2"}]
+        "components": [{"bom-ref": "demo-ref", "name": "demo", "version": "1.2", "purl": "pkg:pypi/demo@1.2"}],
+        "vulnerabilities": [{"id": "CVE-2026-1234", "affects": [{"ref": "demo-ref"}]}]
     }))
     result = load_sbom(source)
     assert result["format"] == "CycloneDX"
     assert result["components"][0]["purl"] == "pkg:pypi/demo@1.2"
+    assert result["components"][0]["cve_ids"] == ["CVE-2026-1234"]
 
 
 def test_load_spdx_inventory(tmp_path):
