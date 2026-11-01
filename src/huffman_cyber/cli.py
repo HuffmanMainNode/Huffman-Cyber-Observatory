@@ -51,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("source")
         command.add_argument("destination")
 
-    keys = sub.add_parser("keygen", help="generate an Ed25519 key pair")
+    keys = sub.add_parser("keygen", help="generate an encrypted Ed25519 key pair")
     keys.add_argument("private_key")
     keys.add_argument("public_key")
 
@@ -104,10 +104,15 @@ def main() -> None:
             Path(args.destination).write_bytes(output)
             print(f"Wrote {args.destination}")
         elif args.command == "keygen":
-            generate_ed25519(args.private_key, args.public_key)
-            print("Ed25519 key pair generated; protect the private key.")
+            password = getpass.getpass("Private-key encryption passphrase: ").encode()
+            confirmation = getpass.getpass("Confirm passphrase: ").encode()
+            if password != confirmation:
+                raise ValueError("passphrases do not match")
+            generate_ed25519(args.private_key, args.public_key, password)
+            print("Encrypted Ed25519 key pair generated; protect the passphrase and private key.")
         elif args.command == "sign":
-            sign_file(args.private_key, args.source, args.output)
+            password = getpass.getpass("Private-key encryption passphrase: ").encode()
+            sign_file(args.private_key, args.source, args.output, password)
             print(f"Signature written to {args.output}")
         elif args.command == "verify-signature":
             valid = verify_signature(args.public_key, args.source, args.signature)
