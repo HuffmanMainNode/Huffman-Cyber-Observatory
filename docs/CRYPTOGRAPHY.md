@@ -12,7 +12,9 @@ Passphrases must be at least 12 bytes. Prefer a unique, randomly generated passp
 
 ## Digital signatures
 
-Detached signatures use Ed25519. Public keys may be distributed; private keys must remain confidential and should be stored in a hardware-backed or otherwise protected key store for production use. A valid signature proves that signed bytes match a key, not that the key owner is trustworthy.
+Detached signatures use Ed25519. Private-key PEM files are encrypted at rest with the cryptography library's best-available PEM encryption and require an interactive passphrase to sign. New key files are created exclusively, not overwritten. The private key file is restricted to owner read/write permissions where the platform supports POSIX modes.
+
+Public keys may be distributed; private keys must remain confidential and should be stored in a hardware-backed or otherwise protected key store for production use. A valid signature proves that signed bytes match a key, not that the key owner is trustworthy.
 
 ## Hashes
 
