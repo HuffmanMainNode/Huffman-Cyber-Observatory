@@ -1,4 +1,5 @@
 import pytest
+from cryptography.exceptions import InvalidTag
 
 from huffman_cyber.crypto import decrypt_bytes, encrypt_bytes
 
@@ -11,14 +12,14 @@ def test_authenticated_round_trip():
 
 def test_wrong_password_fails():
     encrypted = encrypt_bytes(b"classified test", b"correct horse battery staple")
-    with pytest.raises(Exception):
+    with pytest.raises(InvalidTag):
         decrypt_bytes(encrypted, b"different horse battery staple")
 
 
 def test_tampering_fails():
     encrypted = bytearray(encrypt_bytes(b"payload", b"correct horse battery staple"))
     encrypted[-1] ^= 1
-    with pytest.raises(Exception):
+    with pytest.raises(InvalidTag):
         decrypt_bytes(bytes(encrypted), b"correct horse battery staple")
 
 
