@@ -1,7 +1,13 @@
 import pytest
 from cryptography.exceptions import InvalidTag
 
-from huffman_cyber.crypto import decrypt_bytes, encrypt_bytes
+from huffman_cyber.crypto import (
+    decrypt_bytes,
+    encrypt_bytes,
+    generate_ed25519,
+    sign_file,
+    verify_signature,
+)
 
 
 def test_authenticated_round_trip():
@@ -26,3 +32,27 @@ def test_tampering_fails():
 def test_short_password_rejected():
     with pytest.raises(ValueError):
         encrypt_bytes(b"payload", b"short")
+
+
+def test_encrypted_ed25519_sign_and_verify(tmp_path):
+    private = tmp_path / "private.pem"
+    public = tmp_path / "public.pem"
+    source = tmp_path / "artifact.bin"
+    signature = tmp_path / "artifact.sig.json"
+    password = b"strong unique passphrase"
+    source.write_bytes(b"release artifact")
+    generate_ed25519(private, public, password)
+    assert b"ENCRYPTED" in private.read_bytes()
+    sign_file(private, source, signature, password)
+    assert verify_signature(public, source, signature)
+    source.write_bytes(b"tampered artifact")
+    assert not verify_signature(public, source, signature)
+
+
+def test_keygen_refuses_overwrite(tmp_path):
+    private = tmp_path / "private.pem"
+    public = tmp_path / "public.pem"
+    private.write_text("existing")
+    with pytest.raises(FileExistsError):
+        generate_ed25519(private, public, b"strong unique passphrase")
+    assert private.read_text() == "existing"
