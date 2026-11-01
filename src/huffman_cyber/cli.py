@@ -17,6 +17,7 @@ from huffman_cyber.crypto import (
 from huffman_cyber.feeds.kev import save_kev
 from huffman_cyber.integrity import create_manifest, verify_manifest, write_json
 from huffman_cyber.report import report
+from huffman_cyber.sbom import correlate_kev, load_sbom
 from huffman_cyber.scanners.secrets import scan
 
 
@@ -42,6 +43,16 @@ def build_parser() -> argparse.ArgumentParser:
     verify = sub.add_parser("verify", help="verify a SHA-256 file manifest")
     verify.add_argument("manifest")
     verify.add_argument("--target", default=".")
+
+    sbom = sub.add_parser("sbom", help="inventory and audit a software bill of materials")
+    sbom_sub = sbom.add_subparsers(dest="sbom_command", required=True)
+    inventory = sbom_sub.add_parser("inventory", help="normalize CycloneDX or SPDX JSON")
+    inventory.add_argument("source")
+    inventory.add_argument("--output", default="sbom-inventory.json")
+    correlate = sbom_sub.add_parser("correlate", help="match explicit SBOM CVEs against a saved KEV snapshot")
+    correlate.add_argument("source")
+    correlate.add_argument("kev_snapshot")
+    correlate.add_argument("--output", default="sbom-kev-report.json")
 
     for name, help_text in (
         ("encrypt", "encrypt a file with AES-256-GCM"),
@@ -94,6 +105,16 @@ def main() -> None:
             print(json.dumps(result, indent=2))
             if any(result.values()):
                 sys.exit(1)
+        elif args.command == "sbom" and args.sbom_command == "inventory":
+            result = load_sbom(args.source)
+            write_json(args.output, result)
+            print(f"Inventoried {result['component_count']} components: {args.output}")
+        elif args.command == "sbom" and args.sbom_command == "correlate":
+            inventory_data = load_sbom(args.source)
+            kev_data = json.loads(Path(args.kev_snapshot).read_text(encoding="utf-8"))
+            result = correlate_kev(inventory_data, kev_data)
+            write_json(args.output, result)
+            print(f"Found {result['finding_count']} explicit KEV match(es): {args.output}")
         elif args.command in {"encrypt", "decrypt"}:
             password = getpass.getpass("Passphrase (minimum 12 bytes): ").encode()
             source = Path(args.source).read_bytes()
