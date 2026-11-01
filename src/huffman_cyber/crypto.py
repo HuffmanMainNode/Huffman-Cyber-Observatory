@@ -79,7 +79,9 @@ def sign_file(private_path: str | Path, data_path: str | Path, output_path: str 
     Path(output_path).write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
 
 
-def verify_signature(public_path: str | Path, data_path: str | Path, signature_path: str | Path) -> bool:
+def verify_signature(
+    public_path: str | Path, data_path: str | Path, signature_path: str | Path
+) -> bool:
     public = serialization.load_pem_public_key(Path(public_path).read_bytes())
     if not isinstance(public, Ed25519PublicKey):
         raise ValueError("public key is not Ed25519")
