@@ -8,7 +8,11 @@ import sys
 from pathlib import Path
 
 from huffman_cyber.crypto import (
-    decrypt_bytes, encrypt_bytes, generate_ed25519, sign_file, verify_signature,
+    decrypt_bytes,
+    encrypt_bytes,
+    generate_ed25519,
+    sign_file,
+    verify_signature,
 )
 from huffman_cyber.feeds.kev import save_kev
 from huffman_cyber.integrity import create_manifest, verify_manifest, write_json
@@ -17,13 +21,17 @@ from huffman_cyber.scanners.secrets import scan
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="hco", description="Local-first defensive security toolkit")
+    parser = argparse.ArgumentParser(
+        prog="hco", description="Local-first defensive security toolkit"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     kev = sub.add_parser("kev", help="fetch and validate the CISA KEV catalog")
     kev.add_argument("--output", default="kev-snapshot.json")
 
-    secrets = sub.add_parser("secrets", help="scan a local directory for redacted secret candidates")
+    secrets = sub.add_parser(
+        "secrets", help="scan a local directory for redacted secret candidates"
+    )
     secrets.add_argument("target")
     secrets.add_argument("--json", dest="output")
 
@@ -64,7 +72,10 @@ def main() -> None:
     try:
         if args.command == "kev":
             data = save_kev(args.output)
-            print(f"Saved {data['vulnerability_count']} KEV records to {args.output}; SHA-256 {data['sha256']}")
+            print(
+                f"Saved {data['vulnerability_count']} KEV records to "
+                f"{args.output}; SHA-256 {data['sha256']}"
+            )
         elif args.command == "secrets":
             findings = scan(args.target)
             data = report("secret_scan", findings)
@@ -86,7 +97,10 @@ def main() -> None:
         elif args.command in {"encrypt", "decrypt"}:
             password = getpass.getpass("Passphrase (minimum 12 bytes): ").encode()
             source = Path(args.source).read_bytes()
-            output = encrypt_bytes(source, password) if args.command == "encrypt" else decrypt_bytes(source, password)
+            if args.command == "encrypt":
+                output = encrypt_bytes(source, password)
+            else:
+                output = decrypt_bytes(source, password)
             Path(args.destination).write_bytes(output)
             print(f"Wrote {args.destination}")
         elif args.command == "keygen":
