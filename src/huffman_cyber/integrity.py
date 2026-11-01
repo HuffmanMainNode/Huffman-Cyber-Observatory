@@ -50,7 +50,10 @@ def verify_manifest(manifest: dict[str, Any], root: str | Path) -> dict[str, lis
             continue
         if resolved.is_file():
             actual[name] = _digest(resolved)
-    changed = sorted(name for name, digest in expected.items() if name in actual and actual[name] != digest)
+    changed = sorted(
+        name for name, digest in expected.items()
+        if name in actual and actual[name] != digest
+    )
     missing = sorted(set(expected) - set(actual))
     unexpected = []
     for path in base.rglob("*"):
