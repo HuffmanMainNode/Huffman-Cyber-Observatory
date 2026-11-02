@@ -28,7 +28,8 @@ def _entropy(value: str) -> float:
 
 def _walk(root: Path) -> Iterator[Path]:
     for path in root.rglob("*"):
-        if any(part in SKIP_DIRS for part in path.parts):
+        relative_parts = path.relative_to(root).parts
+        if any(part in SKIP_DIRS for part in relative_parts):
             continue
         if path.is_file() and not path.is_symlink():
             yield path
