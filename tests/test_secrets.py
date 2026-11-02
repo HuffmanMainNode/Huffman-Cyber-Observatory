@@ -105,3 +105,12 @@ def test_extended_secret_patterns_are_redacted(tmp_path):
     } <= rules
     assert all(item["evidence"] == "[REDACTED]" for item in result["findings"])
     assert all(token not in str(result) for token in tokens)
+
+
+
+def test_scan_root_under_node_modules_parent_is_scanned(tmp_path):
+    root = tmp_path / "node_modules" / "project"
+    root.mkdir(parents=True)
+    (root / "config.py").write_text('key = "AKIAIOSFODNN7EXAMPLE"\n')
+    findings = scan(root)
+    assert any(item["rule"] == "aws_access_key_candidate" for item in findings)
