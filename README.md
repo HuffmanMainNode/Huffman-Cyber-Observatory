@@ -14,6 +14,10 @@ Open-source defensive security tooling for local-first assessment, vulnerability
 - CycloneDX/SPDX JSON SBOM inventory and explicit-CVE correlation against a saved CISA KEV snapshot.
 - Versioned JSON reports, tests, and minimal-permission CI.
 
+## Onboarding
+
+New operators: start with [Human Onboarding](docs/USER-ONBOARDING.md). Agents and automation developers: read [Agent Onboarding](docs/AGENT-ONBOARDING.md) and [AGENTS.md](AGENTS.md). The supported interfaces are the local CLI and Python library; this release does not provide an MCP server.
+
 ## Quick start
 
 Requires Python 3.11+.
