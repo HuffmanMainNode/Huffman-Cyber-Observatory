@@ -11,6 +11,7 @@ Open-source defensive security tooling for local-first assessment, vulnerability
 - SHA-256 integrity manifests and verification.
 - AES-256-GCM authenticated file encryption using scrypt-derived keys.
 - Ed25519 file signing and verification.
+- CycloneDX/SPDX JSON SBOM inventory and explicit-CVE correlation against a saved CISA KEV snapshot.
 - Versioned JSON reports, tests, and minimal-permission CI.
 
 ## Quick start
@@ -38,6 +39,8 @@ hco decrypt private.txt.hco restored.txt
 hco keygen signing-key.pem signing-key.pub
 hco sign signing-key.pem release.tar.gz --output release.sig.json
 hco verify-signature signing-key.pub release.tar.gz release.sig.json
+hco sbom inventory bom.cdx.json --output inventory.json
+hco sbom correlate bom.cdx.json kev-snapshot.json --output sbom-kev-report.json
 ```
 
 ## Safety boundaries
