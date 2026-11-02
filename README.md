@@ -75,3 +75,13 @@ This is an experimental defensive toolkit, not a certification or a substitute f
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Optional OIX evidence exchange
+
+Install Open Intelligence Exchange alongside Cyber Observatory to enable `huffman_cyber.oix_bridge`. The bridge hashes a selected local SBOM report or file manifest and creates a signed, metadata-only OIX `evidence.submit` envelope. The report itself is never uploaded or attached.
+
+The receiving OIX agent validates the signature and schema, then places the submission in its pending-review queue. An operator must approve it before downstream ingestion. See [OIX Evidence Bridge](docs/OIX-EVIDENCE-BRIDGE.md) and run the synthetic demonstration:
+
+```bash
+python examples/oix_evidence_bridge_demo.py
+```
