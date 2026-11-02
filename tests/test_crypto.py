@@ -1,3 +1,6 @@
+import os
+import stat
+
 import pytest
 from cryptography.exceptions import InvalidTag
 
@@ -56,3 +59,11 @@ def test_keygen_refuses_overwrite(tmp_path):
     with pytest.raises(FileExistsError):
         generate_ed25519(private, public, b"strong unique passphrase")
     assert private.read_text() == "existing"
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX file modes are unavailable")
+def test_generated_private_key_has_owner_only_permissions(tmp_path):
+    private = tmp_path / "private.pem"
+    public = tmp_path / "public.pem"
+    generate_ed25519(private, public, b"strong unique passphrase")
+    assert stat.S_IMODE(private.stat().st_mode) == 0o600

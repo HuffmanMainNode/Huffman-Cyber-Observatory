@@ -2,7 +2,7 @@
 
 Open-source defensive security tooling for local-first assessment, vulnerability intelligence, evidence integrity, and practical cryptography.
 
-> **Security posture:** read-only by default, explicit scope, local processing, evidence-backed findings, and no exploit execution. “Military-grade” is an engineering aspiration, not a certification or guarantee.
+> **Security posture:** experimental defensive tooling with local processing, evidence-backed findings, and no exploit execution. It is not a certification or guarantee of security.
 
 ## Initial release
 
@@ -11,6 +11,7 @@ Open-source defensive security tooling for local-first assessment, vulnerability
 - SHA-256 integrity manifests and verification.
 - AES-256-GCM authenticated file encryption using scrypt-derived keys.
 - Ed25519 file signing and verification.
+- CycloneDX/SPDX JSON SBOM inventory and explicit-CVE correlation against a saved CISA KEV snapshot.
 - Versioned JSON reports, tests, and minimal-permission CI.
 
 ## Quick start
@@ -38,6 +39,8 @@ hco decrypt private.txt.hco restored.txt
 hco keygen signing-key.pem signing-key.pub
 hco sign signing-key.pem release.tar.gz --output release.sig.json
 hco verify-signature signing-key.pub release.tar.gz release.sig.json
+hco sbom inventory bom.cdx.json --output inventory.json
+hco sbom correlate bom.cdx.json kev-snapshot.json --output sbom-kev-report.json
 ```
 
 ## Safety boundaries
@@ -51,12 +54,12 @@ hco verify-signature signing-key.pub release.tar.gz release.sig.json
 
 ## Limitations
 
-This is an initial foundation, not a certified security product or a substitute for a professional assessment. Secret detection is heuristic and has false positives and false negatives. A clean scan is not proof of security. KEV is one intelligence source, not a complete vulnerability database.
+This is an experimental defensive toolkit, not a certification or a substitute for a professional assessment. Secret detection is heuristic and has false positives and false negatives. Reports include files scanned and files skipped by reason, but a clean scan is not proof of security. KEV is one intelligence source, not a complete vulnerability database. Private-key files are created with POSIX mode 0600 where supported; Windows does not enforce POSIX mode bits.
 
 ## Roadmap
 
 1. OSV and NVD advisory enrichment.
-2. CycloneDX/SPDX SBOM parsing and dependency matching.
+2. OSV and NVD advisory enrichment beyond explicit CVE-to-KEV correlation.
 3. Versioned CIS/NIST host configuration checks.
 4. Local stdio agent interface with strict path scoping.
 5. Signed release attestations, reproducible builds, and independent review.

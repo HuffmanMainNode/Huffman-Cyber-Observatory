@@ -5,6 +5,7 @@ import base64
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
 
 from cryptography.exceptions import InvalidSignature
@@ -71,7 +72,10 @@ def generate_ed25519(
         serialization.Encoding.PEM,
         serialization.PublicFormat.SubjectPublicKeyInfo,
     )
-    with private_file.open("xb") as stream:
+    descriptor = os.open(
+        private_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600
+    )
+    with os.fdopen(descriptor, "wb") as stream:
         stream.write(private_bytes)
     try:
         with public_file.open("xb") as stream:
@@ -79,10 +83,19 @@ def generate_ed25519(
     except Exception:
         private_file.unlink(missing_ok=True)
         raise
-    try:
-        os.chmod(private_file, 0o600)
-    except OSError:
-        pass
+    if os.name == "posix":
+        try:
+            os.chmod(private_file, 0o600)
+        except OSError as exc:
+            print(
+                f"warning: could not enforce private-key permissions: {exc}",
+                file=sys.stderr,
+            )
+    else:
+        print(
+            "warning: POSIX private-key permissions are not enforced on this platform",
+            file=sys.stderr,
+        )
 
 
 def sign_file(
