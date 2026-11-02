@@ -18,7 +18,7 @@ from huffman_cyber.feeds.kev import save_kev
 from huffman_cyber.integrity import create_manifest, verify_manifest, write_json
 from huffman_cyber.report import report
 from huffman_cyber.sbom import correlate_kev, load_sbom
-from huffman_cyber.scanners.secrets import scan
+from huffman_cyber.scanners.secrets import scan_report
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -88,8 +88,10 @@ def main() -> None:
                 f"{args.output}; SHA-256 {data['sha256']}"
             )
         elif args.command == "secrets":
-            findings = scan(args.target)
-            data = report("secret_scan", findings)
+            scan_data = scan_report(args.target)
+            data = report("secret_scan", scan_data["findings"])
+            data["files_scanned"] = scan_data["files_scanned"]
+            data["files_skipped"] = scan_data["files_skipped"]
             if args.output:
                 write_json(args.output, data)
                 print(f"{len(findings)} candidate(s); redacted report saved to {args.output}")
