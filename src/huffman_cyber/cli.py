@@ -94,7 +94,7 @@ def main() -> None:
             data["files_skipped"] = scan_data["files_skipped"]
             if args.output:
                 write_json(args.output, data)
-                print(f"{len(findings)} candidate(s); redacted report saved to {args.output}")
+                print(f"{len(scan_data["findings"])} candidate(s); redacted report saved to {args.output}")
             else:
                 print(json.dumps(data, indent=2))
         elif args.command == "hash":
