@@ -51,7 +51,7 @@ hco verify-signature signing-key.pub release.tar.gz release.sig.json
 
 ## Limitations
 
-This is an initial foundation, not a certified security product or a substitute for a professional assessment. Secret detection is heuristic and has false positives and false negatives. A clean scan is not proof of security. KEV is one intelligence source, not a complete vulnerability database.
+This is an experimental defensive toolkit, not a certification or a substitute for a professional assessment. Secret detection is heuristic and has false positives and false negatives. Reports include files scanned and files skipped by reason, but a clean scan is not proof of security. KEV is one intelligence source, not a complete vulnerability database. Private-key files are created with POSIX mode 0600 where supported; Windows does not enforce POSIX mode bits.
 
 ## Roadmap
 
