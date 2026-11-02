@@ -2,7 +2,7 @@
 
 Open-source defensive security tooling for local-first assessment, vulnerability intelligence, evidence integrity, and practical cryptography.
 
-> **Security posture:** read-only by default, explicit scope, local processing, evidence-backed findings, and no exploit execution. “Military-grade” is an engineering aspiration, not a certification or guarantee.
+> **Security posture:** experimental defensive tooling with local processing, evidence-backed findings, and no exploit execution. It is not a certification or guarantee of security.
 
 ## Initial release
 
@@ -56,7 +56,7 @@ This is an initial foundation, not a certified security product or a substitute 
 ## Roadmap
 
 1. OSV and NVD advisory enrichment.
-2. CycloneDX/SPDX SBOM parsing and dependency matching.
+2. OSV and NVD advisory enrichment beyond explicit CVE-to-KEV correlation.
 3. Versioned CIS/NIST host configuration checks.
 4. Local stdio agent interface with strict path scoping.
 5. Signed release attestations, reproducible builds, and independent review.
