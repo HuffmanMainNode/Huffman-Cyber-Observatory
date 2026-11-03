@@ -67,3 +67,54 @@ def test_generated_private_key_has_owner_only_permissions(tmp_path):
     public = tmp_path / "public.pem"
     generate_ed25519(private, public, b"strong unique passphrase")
     assert stat.S_IMODE(private.stat().st_mode) == 0o600
+
+
+def test_decrypt_rejects_oversized_envelope_before_decryption(monkeypatch):
+    from huffman_cyber import crypto
+
+    monkeypatch.setattr(crypto, "MAX_INPUT_BYTES", 4)
+    header = crypto.MAGIC + bytes([1]) + b"s" * crypto.SALT_LEN + b"n" * crypto.NONCE_LEN
+    with pytest.raises(ValueError, match="exceeds 64 MiB"):
+        decrypt_bytes(header + b"x" * 21, b"correct horse battery staple")
+
+
+def test_signing_refuses_to_overwrite_signature_document(tmp_path):
+    private = tmp_path / "private.pem"
+    public = tmp_path / "public.pem"
+    source = tmp_path / "artifact.bin"
+    signature = tmp_path / "artifact.sig.json"
+    source.write_bytes(b"release artifact")
+    generate_ed25519(private, public, b"strong unique passphrase")
+    signature.write_text("keep me", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        sign_file(private, source, signature, b"strong unique passphrase")
+    assert signature.read_text(encoding="utf-8") == "keep me"
+
+
+def test_signing_rejects_oversized_input(tmp_path, monkeypatch):
+    from huffman_cyber import crypto
+
+    private = tmp_path / "private.pem"
+    public = tmp_path / "public.pem"
+    source = tmp_path / "artifact.bin"
+    signature = tmp_path / "artifact.sig.json"
+    generate_ed25519(private, public, b"strong unique passphrase")
+    source.write_bytes(b"12345")
+    monkeypatch.setattr(crypto, "MAX_INPUT_BYTES", 4)
+
+    with pytest.raises(ValueError, match="size limit"):
+        sign_file(private, source, signature, b"strong unique passphrase")
+
+
+def test_signature_document_must_be_valid_json_object(tmp_path):
+    private = tmp_path / "private.pem"
+    public = tmp_path / "public.pem"
+    source = tmp_path / "artifact.bin"
+    signature = tmp_path / "artifact.sig.json"
+    source.write_bytes(b"release artifact")
+    generate_ed25519(private, public, b"strong unique passphrase")
+    signature.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(TypeError, match="JSON object"):
+        verify_signature(public, source, signature)
