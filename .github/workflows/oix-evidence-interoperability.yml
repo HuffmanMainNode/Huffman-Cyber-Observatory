@@ -21,15 +21,18 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - name: Check out Cyber Observatory
-        uses: actions/checkout@v4
-      - name: Check out Open Intelligence Exchange Phase 11
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check out Open Intelligence Exchange at reviewed commit
+        uses: actions/checkout@v7
         with:
           repository: HuffmanMainNode/Open-Intelligence-Exchange
-          ref: integration/phase-11-evidence-submit-contract
+          ref: f2c2326675bf881b6195c5f761b628da6579fe38
           path: Open-Intelligence-Exchange
+          persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install OIX and Cyber Observatory
