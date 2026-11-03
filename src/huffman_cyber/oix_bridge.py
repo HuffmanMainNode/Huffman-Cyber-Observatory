@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from . import __version__
+
 
 def create_evidence_message(
     *,
@@ -65,7 +67,7 @@ def create_evidence_message(
         "source_uri": source_uri,
         "source_timestamp": source_timestamp,
         "collected_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-        "collector": {"name": "huffman-cyber-observatory", "version": "0.1.0"},
+        "collector": {"name": "huffman-cyber-observatory", "version": __version__},
         "method": {"name": method_name, "version": method_version},
         "artifact": {
             "sha256": digest.hexdigest(),
