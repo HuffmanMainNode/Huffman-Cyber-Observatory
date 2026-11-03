@@ -1,3 +1,5 @@
+import pytest
+
 from huffman_cyber.integrity import create_manifest, verify_manifest
 
 
@@ -20,10 +22,6 @@ def test_manifest_excludes_symlink(tmp_path):
     outside.write_text("not in scope")
     (root / "link.txt").symlink_to(outside)
     assert create_manifest(root)["entries"] == []
-
-import json
-import pytest
-
 
 def test_manifest_rejects_duplicate_paths(tmp_path):
     root = tmp_path / "root"
