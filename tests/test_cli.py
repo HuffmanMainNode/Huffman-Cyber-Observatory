@@ -1,6 +1,8 @@
 import json
 import sys
 
+import pytest
+
 from huffman_cyber.cli import main
 
 
@@ -57,3 +59,22 @@ def test_sbom_cli_inventory_and_kev_correlation(tmp_path, monkeypatch, capsys):
     result = json.loads(report_path.read_text(encoding="utf-8"))
     assert result["finding_count"] == 1
     assert "Found 1 explicit KEV match" in capsys.readouterr().out
+
+
+def test_encrypt_cli_refuses_to_overwrite_destination(tmp_path, monkeypatch):
+    source = tmp_path / "source.txt"
+    destination = tmp_path / "encrypted.hco"
+    source.write_text("sensitive payload", encoding="utf-8")
+    destination.write_text("preserve existing data", encoding="utf-8")
+    monkeypatch.setattr("huffman_cyber.cli.getpass.getpass", lambda _prompt: "strong unique passphrase")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["hco", "encrypt", str(source), str(destination)],
+    )
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 2
+    assert destination.read_text(encoding="utf-8") == "preserve existing data"
