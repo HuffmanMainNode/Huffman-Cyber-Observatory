@@ -78,6 +78,8 @@ def test_manifest_rejects_nested_symlink_substitution(tmp_path):
     (outside / "a.txt").write_text("alpha")
     folder.rename(root / "original-folder")
     (root / "folder").symlink_to(outside, target_is_directory=True)
+    (root / "original-folder" / "a.txt").unlink()
+    (root / "original-folder").rmdir()
 
     result = verify_manifest(manifest, root)
     assert result["missing"] == ["folder/a.txt"]
