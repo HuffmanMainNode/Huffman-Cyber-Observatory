@@ -23,6 +23,7 @@ def test_manifest_excludes_symlink(tmp_path):
     (root / "link.txt").symlink_to(outside)
     assert create_manifest(root)["entries"] == []
 
+
 def test_manifest_rejects_duplicate_paths(tmp_path):
     root = tmp_path / "root"
     root.mkdir()
