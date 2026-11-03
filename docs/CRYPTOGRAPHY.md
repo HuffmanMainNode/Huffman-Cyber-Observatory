@@ -6,13 +6,13 @@ The initial envelope uses AES-256-GCM from `cryptography` with a 256-bit key der
 
 Format v1: `HCOENC01 || version(1) || salt(16) || nonce(12) || ciphertext_and_tag`.
 
-Scrypt parameters: N=32768, r=8, p=1. These constants are part of format v1 and must not be silently changed. The implementation limits input to 64 MiB because it buffers the complete file in memory.
+Scrypt parameters: N=32768, r=8, p=1. These constants are part of format v1 and must not be silently changed. The implementation limits plaintext and encrypted-envelope inputs to 64 MiB because it buffers the complete file in memory. Decryption rejects envelopes above the corresponding ciphertext-plus-header bound before attempting key derivation.
 
 Passphrases must be at least 12 bytes. Prefer a unique, randomly generated passphrase with substantially more entropy. Do not reuse passwords. The application does not store or recover passphrases.
 
 ## Digital signatures
 
-Detached signatures use Ed25519. Private-key PEM files are encrypted at rest with the cryptography library's best-available PEM encryption and require an interactive passphrase to sign. New key files are created exclusively, not overwritten. The private key file is restricted to owner read/write permissions where the platform supports POSIX modes.
+Detached signatures use Ed25519. Private-key PEM files are encrypted at rest with the cryptography library's best-available PEM encryption and require an interactive passphrase to sign. New key files and detached signature documents are created exclusively, not overwritten. The signing and verification paths are limited to 64 MiB, and signature JSON documents are limited to 16 KiB. The private key file is restricted to owner read/write permissions where the platform supports POSIX modes.
 
 Public keys may be distributed; private keys must remain confidential and should be stored in a hardware-backed or otherwise protected key store for production use. A valid signature proves that signed bytes match a key, not that the key owner is trustworthy.
 
