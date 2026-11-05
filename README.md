@@ -62,11 +62,10 @@ This is an experimental defensive toolkit, not a certification or a substitute f
 
 ## Roadmap
 
-1. OSV and NVD advisory enrichment.
-2. OSV and NVD advisory enrichment beyond explicit CVE-to-KEV correlation.
-3. Versioned CIS/NIST host configuration checks.
-4. Local stdio agent interface with strict path scoping.
-5. Signed release attestations, reproducible builds, and independent review.
+1. Version-aware OSV and NVD advisory enrichment beyond explicit CVE-to-KEV correlation.
+2. Versioned CIS/NIST host configuration checks.
+3. Local stdio agent interface with strict path scoping.
+4. Signed release attestations, reproducible builds, and independent review.
 
 ## Sources
 

@@ -10,6 +10,7 @@ from oix.identity import generate_identity
 from oix.inbox import InboxError, SQLiteInbox
 from oix.policy import CapabilityPolicy
 
+from huffman_cyber import __version__
 from huffman_cyber.oix_bridge import create_evidence_message
 
 
@@ -47,6 +48,7 @@ def test_sbom_report_becomes_signed_metadata_only_evidence(tmp_path):
     assert payload["artifact"]["sha256"] == hashlib.sha256(content).hexdigest()
     assert payload["artifact"]["size_bytes"] == len(content)
     assert payload["evidence_type"] == "sbom_analysis"
+    assert payload["collector"]["version"] == __version__
     assert content.decode() not in str(payload)
 
     inbox = SQLiteInbox(

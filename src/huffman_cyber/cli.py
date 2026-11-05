@@ -124,7 +124,8 @@ def main() -> None:
                 output = encrypt_bytes(source, password)
             else:
                 output = decrypt_bytes(source, password)
-            Path(args.destination).write_bytes(output)
+            with Path(args.destination).open("xb") as destination:
+                destination.write(output)
             print(f"Wrote {args.destination}")
         elif args.command == "keygen":
             password = getpass.getpass("Private-key encryption passphrase: ").encode()
