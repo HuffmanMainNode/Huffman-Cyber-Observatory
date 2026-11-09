@@ -42,9 +42,10 @@ attestation as a security audit of the source code.
 
 ## Reproducibility and trust boundaries
 
-- The release workflow now checks byte-for-byte equality between two separate
-  GitHub-hosted runner builds. This is a reproducibility check within one
-  release workflow, not an independent third-party rebuild.
+- The release workflow normalizes source-archive ownership and timestamps, then
+  checks byte-for-byte equality between two separate GitHub-hosted runner builds.
+  This is a reproducibility check within one release workflow, not an independent
+  third-party rebuild.
 - The SHA-256 manifest detects accidental or malicious artifact changes only
   when the manifest itself is obtained through a trusted channel.
 - Prefer verifying both the manifest and each artifact's attestation.
