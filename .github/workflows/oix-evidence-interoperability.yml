@@ -37,7 +37,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install OIX and Cyber Observatory
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip "setuptools>=84.1.0" wheel
           python -m pip install -e ./Open-Intelligence-Exchange
           python -m pip install -e ".[dev]"
       - name: Audit combined OIX and HCO dependencies
