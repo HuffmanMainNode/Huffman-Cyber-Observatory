@@ -14,7 +14,7 @@ python -m venv .venv
 source .venv/bin/activate
 # Windows PowerShell
 .venv\\Scripts\\Activate.ps1
-python -m pip install -e ".[dev]"
+python -m pip install .
 ```
 
 ## First safe checks
@@ -23,8 +23,9 @@ python -m pip install -e ".[dev]"
 hco --help
 hco hash ./your-project --output project-manifest.json
 hco verify project-manifest.json --target ./your-project
-pytest -q
 ```
+
+For contributor testing, install the development extras with `python -m pip install -e '.[dev]'` and run `pytest -q`.
 
 The hash and verify commands operate on local files. Review the manifest before sharing it because paths and file metadata can be sensitive.
 

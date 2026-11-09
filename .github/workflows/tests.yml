@@ -17,9 +17,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: python -m pip install --upgrade pip "setuptools>=84.1.0" wheel
+      - run: python -m pip install --upgrade pip "setuptools>=84.1.0" wheel build
       - run: python -m pip install -e '.[dev]'
       - run: pytest --cov=huffman_cyber --cov-report=term-missing
       - run: ruff check .
       - run: bandit -q -r src
       - run: pip-audit --skip-editable
+      - name: Build source distribution and wheel
+        run: python -m build
+      - name: Smoke-test the built wheel in a clean environment
+        run: |
+          python -m venv /tmp/hco-wheel-smoke
+          /tmp/hco-wheel-smoke/bin/python -m pip install dist/*.whl
+          /tmp/hco-wheel-smoke/bin/hco --help
+          /tmp/hco-wheel-smoke/bin/python -c "from huffman_cyber import __version__; print(__version__)"

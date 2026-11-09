@@ -27,9 +27,12 @@ Requires Python 3.11+.
 python -m venv .venv
 # Linux/macOS: source .venv/bin/activate
 # Windows: .venv\Scripts\Activate.ps1
+python -m pip install .
+hco --help
+
+# Optional contributor/development environment:
 python -m pip install -e '.[dev]'
 pytest
-hco --help
 ```
 
 ## Examples
