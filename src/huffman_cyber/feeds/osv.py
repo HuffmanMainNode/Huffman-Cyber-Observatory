@@ -84,7 +84,6 @@ def _post_batch(queries: list[dict[str, Any]], timeout: float) -> tuple[dict[str
     return document, body, raw
 
 
-
 def _reported_component_version(component: dict[str, Any]) -> str:
     """Return the SBOM version, falling back to a version embedded in its PURL."""
     version = component.get("version")
