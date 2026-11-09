@@ -43,6 +43,7 @@ jobs:
           python -m pip install build==1.2.2.post1 setuptools==84.1.0 wheel==0.45.1
           export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$GITHUB_SHA")"
           python -m build --no-isolation --outdir dist
+          python tools/normalize_sdist.py dist/*.tar.gz --epoch "$SOURCE_DATE_EPOCH"
 
       - name: Upload independent build
         uses: actions/upload-artifact@v7
