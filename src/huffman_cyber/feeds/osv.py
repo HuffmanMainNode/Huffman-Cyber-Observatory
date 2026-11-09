@@ -17,6 +17,8 @@ OSV_QUERY_URL = "https://api.osv.dev/v1/querybatch"
 MAX_COMPONENTS = 1000
 BATCH_SIZE = 100
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
+MAX_TOTAL_RESPONSE_BYTES = 16 * 1024 * 1024
+MAX_TOTAL_REQUESTS = 20
 MAX_PAGES_PER_BATCH = 10
 CVE_OR_ADVISORY_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 
@@ -32,7 +34,7 @@ def _query_for_component(component: dict[str, Any]) -> dict[str, Any] | None:
     # top-level version field when both are supplied.
     purl_without_qualifiers = purl.split("?", 1)[0].split("#", 1)[0]
     package_path = purl_without_qualifiers.split("/", 1)[-1]
-    query: dict[str, Any] = {"package": {"purl": purl}}
+    query: dict[str, Any] = {"package": {"purl": purl_without_qualifiers}}
     if "@" not in package_path:
         if not isinstance(version, str) or not version.strip():
             return None
@@ -56,7 +58,7 @@ def _post_batch(queries: list[dict[str, Any]], timeout: float) -> tuple[dict[str
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
         final_url = response.geturl()
-        if not final_url.startswith(OSV_QUERY_URL):
+        if final_url != OSV_QUERY_URL:
             raise ValueError("OSV request redirected to an unexpected endpoint")
         if response.status != 200:
             raise RuntimeError(f"OSV API returned HTTP {response.status}")
@@ -82,8 +84,8 @@ def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
         raise ValueError("SBOM components must be an array")
     if len(components) > MAX_COMPONENTS:
         raise ValueError(f"OSV query is limited to {MAX_COMPONENTS} SBOM components")
-    if not isinstance(timeout, (int, float)) or isinstance(timeout, bool) or not 1 <= timeout <= 60:
-        raise ValueError("OSV timeout must be between 1 and 60 seconds")
+    if not isinstance(timeout, (int, float)) or isinstance(timeout, bool) or not 1 <= timeout <= 30:
+        raise ValueError("OSV timeout must be between 1 and 30 seconds")
 
     unique_queries: list[dict[str, Any]] = []
     query_indexes: dict[str, int] = {}
@@ -111,15 +113,24 @@ def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
     request_hashes: list[str] = []
     response_hashes: list[str] = []
     complete = True
+    total_response_bytes = 0
+    total_requests = 0
 
     for offset in range(0, len(unique_queries), BATCH_SIZE):
+        if total_requests >= MAX_TOTAL_REQUESTS:
+            complete = False
+            break
         batch = unique_queries[offset:offset + BATCH_SIZE]
         pending = [(offset + index, query) for index, query in enumerate(batch)]
         page = 0
-        while pending and page < MAX_PAGES_PER_BATCH:
+        while pending and page < MAX_PAGES_PER_BATCH and total_requests < MAX_TOTAL_REQUESTS:
             document, request_bytes, response_bytes = _post_batch(
                 [query for _, query in pending], float(timeout)
             )
+            total_requests += 1
+            total_response_bytes += len(response_bytes)
+            if total_response_bytes > MAX_TOTAL_RESPONSE_BYTES:
+                raise ValueError("OSV cumulative responses exceed configured size limit")
             request_hashes.append(hashlib.sha256(request_bytes).hexdigest())
             response_hashes.append(hashlib.sha256(response_bytes).hexdigest())
             next_pending: list[tuple[int, dict[str, Any]]] = []
