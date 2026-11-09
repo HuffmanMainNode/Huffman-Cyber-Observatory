@@ -60,6 +60,7 @@ def test_versioned_purl_does_not_send_duplicate_version():
     sent = json.loads(urlopen.call_args.args[0].data)
     assert sent["queries"] == [{"package": {"purl": "pkg:pypi/demo@1.2.3"}}]
 
+
 def test_versioned_purl_is_preserved_in_finding_when_component_version_is_empty():
     response = FakeResponse(b'{"results":[{"vulns":[{"id":"CVE-2026-1234"}]}]}')
     with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response):
