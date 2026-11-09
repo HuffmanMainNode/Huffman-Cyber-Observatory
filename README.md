@@ -35,6 +35,17 @@ python -m pip install -e '.[dev]'
 pytest
 ```
 
+## Pinned installation for automation
+
+For reproducible agent or deployment installs, pin the verified repository revision instead of following the moving `main` branch:
+
+```bash
+python -m pip install "git+https://github.com/HuffmanMainNode/Huffman-Cyber-Observatory.git@542bfdc32cf460415a95e1c78bb0ac2001494b77"
+hco --help
+```
+
+This is a source install from a public Git commit, not a hosted HCO service or package-registry dependency. Update the pinned commit deliberately after reviewing a newer revision.
+
 ## Examples
 
 ```bash
