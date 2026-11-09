@@ -98,6 +98,10 @@ This is an experimental defensive toolkit, not a certification or a substitute f
 
 MIT. See [LICENSE](LICENSE).
 
+## Release artifact verification
+
+The tag-triggered release workflow builds wheel and source distributions, generates a SHA-256 manifest, and creates/verifies GitHub build-provenance attestations. It does not publish a GitHub Release or package to PyPI. See [Release Artifact Verification](docs/RELEASE-VERIFICATION.md) for independent verification steps.
+
 ## Optional OIX evidence exchange
 
 Install Open Intelligence Exchange alongside Cyber Observatory to enable `huffman_cyber.oix_bridge`. The bridge hashes a selected local SBOM report or file manifest and creates a signed, metadata-only OIX `evidence.submit` envelope. The report itself is never uploaded or attached.
