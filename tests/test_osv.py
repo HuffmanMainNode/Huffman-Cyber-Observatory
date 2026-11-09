@@ -62,7 +62,7 @@ def test_versioned_purl_does_not_send_duplicate_version():
 
 
 def test_missing_purl_is_reported_without_network_call():
-    with patch("urllib.request.urlopen") as urlopen:
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect") as urlopen:
         result = query_osv(_sbom([{"name": "unknown", "version": "1.0", "purl": ""}]))
     urlopen.assert_not_called()
     assert result["skipped_components"][0]["reason"] == "missing_or_invalid_package_url_or_version"
@@ -74,7 +74,7 @@ def test_duplicate_package_queries_are_deduplicated_and_fanned_out():
         {"name": "first", "version": "1.0", "purl": "pkg:pypi/demo"},
         {"name": "second", "version": "1.0", "purl": "pkg:pypi/demo"},
     ]
-    with patch("urllib.request.urlopen", return_value=response) as urlopen:
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response) as urlopen:
         result = query_osv(_sbom(components))
     sent = json.loads(urlopen.call_args.args[0].data)
     assert len(sent["queries"]) == 1
@@ -85,7 +85,7 @@ def test_duplicate_package_queries_are_deduplicated_and_fanned_out():
 def test_query_batch_pagination_is_followed():
     first = FakeResponse(b'{"results":[{"vulns":[{"id":"CVE-2026-1234"}],"next_page_token":"next"}]}')
     second = FakeResponse(b'{"results":[{"vulns":[{"id":"GHSA-abcd-1234"}]}]}')
-    with patch("urllib.request.urlopen", side_effect=[first, second]) as urlopen:
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", side_effect=[first, second]) as urlopen:
         result = query_osv(_sbom([
             {"name": "demo", "version": "1", "purl": "pkg:pypi/demo"}
         ]))
@@ -98,7 +98,7 @@ def test_query_batch_pagination_is_followed():
 
 def test_malformed_response_fails_closed():
     response = FakeResponse(b'{"results":[{"vulns":"not-an-array"}]}')
-    with patch("urllib.request.urlopen", return_value=response):
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response):
         with pytest.raises(ValueError, match="vulns field"):
             query_osv(_sbom([
                 {"name": "demo", "version": "1", "purl": "pkg:pypi/demo"}
@@ -107,7 +107,7 @@ def test_malformed_response_fails_closed():
 
 def test_oversized_response_is_rejected():
     response = FakeResponse(b"x" * (MAX_RESPONSE_BYTES + 1))
-    with patch("urllib.request.urlopen", return_value=response):
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response):
         with pytest.raises(ValueError, match="size limit"):
             query_osv(_sbom([
                 {"name": "demo", "version": "1", "purl": "pkg:pypi/demo"}
@@ -117,7 +117,7 @@ def test_oversized_response_is_rejected():
 def test_unexpected_redirect_is_rejected():
     response = FakeResponse(b'{"results":[{"vulns":[]}]}')
     response.geturl = lambda: "https://attacker.invalid/collect"
-    with patch("urllib.request.urlopen", return_value=response):
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response):
         with pytest.raises(ValueError, match="unexpected endpoint"):
             query_osv(_sbom([
                 {"name": "demo", "version": "1", "purl": "pkg:pypi/demo"}
@@ -134,7 +134,7 @@ def test_component_and_timeout_limits():
 
 def test_purl_qualifiers_and_subpath_are_not_transmitted():
     response = FakeResponse(b'{"results":[{"vulns":[]}]}')
-    with patch("urllib.request.urlopen", return_value=response) as urlopen:
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response) as urlopen:
         query_osv(_sbom([{
             "name": "demo",
             "version": "1.2.3",
@@ -145,7 +145,7 @@ def test_purl_qualifiers_and_subpath_are_not_transmitted():
 
 
 def test_malformed_purl_is_skipped_without_network_call():
-    with patch("urllib.request.urlopen") as urlopen:
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect") as urlopen:
         result = query_osv(_sbom([{
             "name": "bad",
             "version": "1.0",
