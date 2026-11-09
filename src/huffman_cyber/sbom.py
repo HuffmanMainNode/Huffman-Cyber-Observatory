@@ -114,7 +114,7 @@ def load_sbom(path: str | Path) -> dict[str, Any]:
     if not source.is_file():
         raise ValueError("SBOM source must be a regular file")
     if source.stat().st_size > MAX_SBOM_BYTES:
-        raise ValueError(f"SBOM exceeds {MAX_SBOM_BYTES} byte safety limit")
+        raise ValueError(f"SBOM exceeds configured size limit ({MAX_SBOM_BYTES} bytes)")
     raw = source.read_bytes()
     if len(raw) > MAX_SBOM_BYTES:
         raise ValueError(f"SBOM exceeds {MAX_SBOM_BYTES} byte safety limit")
