@@ -176,3 +176,12 @@ def test_all_skipped_components_do_not_look_like_a_clean_complete_scan():
     opener.assert_not_called()
     assert result["complete"] is False
     assert result["finding_count"] == 0
+
+
+def test_empty_sbom_is_not_reported_as_complete():
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect") as opener:
+        result = query_osv(_sbom([]))
+    opener.assert_not_called()
+    assert result["complete"] is False
+    assert result["queried_package_count"] == 0
+    assert result["finding_count"] == 0
