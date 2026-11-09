@@ -17,6 +17,17 @@ source .venv/bin/activate
 python -m pip install .
 ```
 
+## Reproducible installation
+
+For automation or repeatable deployments, install the reviewed immutable revision rather than an unpinned branch:
+
+```bash
+python -m pip install "git+https://github.com/HuffmanMainNode/Huffman-Cyber-Observatory.git@542bfdc32cf460415a95e1c78bb0ac2001494b77"
+hco --help
+```
+
+The command installs directly from the public Git repository. It does not require PyPI, a hosted HCO service, an API token, or a paid dependency. Git must be available on the machine.
+
 ## First safe checks
 
 ```bash
