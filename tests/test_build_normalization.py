@@ -3,9 +3,15 @@ from __future__ import annotations
 import gzip
 import io
 import tarfile
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
-from tools.normalize_sdist import normalize_sdist
+MODULE_PATH = Path(__file__).resolve().parents[1] / "tools" / "normalize_sdist.py"
+SPEC = spec_from_file_location("hco_normalize_sdist", MODULE_PATH)
+assert SPEC is not None and SPEC.loader is not None
+MODULE = module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+normalize_sdist = MODULE.normalize_sdist
 
 
 def _make_archive(path: Path, *, mtime: int, uid: int, uname: str) -> None:
