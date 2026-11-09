@@ -20,7 +20,7 @@ def fetch_kev(timeout: float = 20.0) -> dict[str, Any]:
         raise ValueError("CISA feed timeout must be between 1 and 60 seconds")
     request = urllib.request.Request(
         FEED_URL,
-        headers={"User-Agent": "HuffmanCyberObservatory/0.1 (+defensive-security)"},
+        headers={"User-Agent": "HuffmanCyberObservatory/0.1.0 (+defensive-security)"},
     )
     # The URL is a fixed, code-owned HTTPS endpoint, not user-supplied input.
     with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310

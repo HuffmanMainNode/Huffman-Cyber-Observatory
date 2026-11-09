@@ -32,7 +32,8 @@ The hash and verify commands operate on local files. Review the manifest before 
 
 - Secret candidates: `hco secrets ./your-project --json redacted-findings.json`. Findings are heuristic and can include false positives and false negatives.
 - SBOM inventory: `hco sbom inventory bom.cdx.json --output inventory.json`.
-- KEV correlation: `hco kev --output kev-snapshot.json`, then `hco sbom correlate inventory.json kev-snapshot.json --output report.json`.
+- KEV correlation: `hco kev --output kev-snapshot.json`, then `hco sbom correlate bom.cdx.json kev-snapshot.json --output report.json`.
+- Optional OSV package-version lookup: `hco sbom osv-correlate bom.cdx.json --output sbom-osv-report.json`. This explicitly sends eligible package URLs and versions to OSV.dev; it does not upload the raw SBOM.
 - File signing: see `hco keygen`, `hco sign` and `hco verify-signature`. Protect the encrypted private key and passphrase.
 
 ## Agent access
