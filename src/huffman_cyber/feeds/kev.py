@@ -8,6 +8,7 @@ import urllib.request
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from .http import open_https_no_redirect
 

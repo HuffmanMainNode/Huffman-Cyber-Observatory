@@ -53,7 +53,7 @@ def test_query_uses_versionless_purl_and_version_field():
 
 def test_versioned_purl_does_not_send_duplicate_version():
     response = FakeResponse(b'{"results":[{"vulns":[]}]}')
-    with patch("urllib.request.urlopen", return_value=response) as urlopen:
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response) as urlopen:
         query_osv(_sbom([
             {"name": "demo", "version": "1.2.3", "purl": "pkg:pypi/demo@1.2.3"}
         ]))

@@ -51,7 +51,7 @@ def test_feed_rejects_invalid_cve_id():
         "dateReleased": "2026-01-01",
         "vulnerabilities": [{"cveID": "CVE-not-valid", "dateAdded": "2026-01-01"}],
     }).encode()
-    with patch("urllib.request.urlopen", return_value=response):
+    with patch("huffman_cyber.feeds.kev.open_https_no_redirect", return_value=response):
         with pytest.raises(ValueError, match="invalid CVE ID"):
             fetch_kev()
 
@@ -64,7 +64,6 @@ def test_feed_rejects_count_mismatch():
         "vulnerabilities": [],
     }).encode()
     with patch("urllib.request.urlopen", return_value=response):
-        import pytest
         with pytest.raises(ValueError, match="count does not match"):
             fetch_kev()
 
@@ -73,6 +72,5 @@ def test_feed_rejects_redirect_outside_cisa():
     response = FakeResponse()
     response.geturl = lambda: "https://attacker.invalid/kev.json"
     with patch("urllib.request.urlopen", return_value=response):
-        import pytest
         with pytest.raises(ValueError, match="unexpected endpoint"):
             fetch_kev()
