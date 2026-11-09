@@ -2,6 +2,17 @@
 
 This project provides defensive local file and software-supply-chain analysis. Its CLI and Python library are the supported interfaces. It does not currently expose an MCP server or hosted API.
 
+## Reproducible installation
+
+Automation should pin an immutable reviewed commit, not silently follow `main`:
+
+```bash
+python -m pip install "git+https://github.com/HuffmanMainNode/Huffman-Cyber-Observatory.git@542bfdc32cf460415a95e1c78bb0ac2001494b77"
+hco --help
+```
+
+The pinned revision is `542bfdc32cf460415a95e1c78bb0ac2001494b77`. Update this pin only after reviewing the replacement revision and validating its install path. This project provides no hosted API or MCP server.
+
 ## First-contact sequence
 
 1. Read `AGENTS.md` and [the human onboarding guide](USER-ONBOARDING.md).
