@@ -31,3 +31,9 @@ jobs:
           /tmp/hco-wheel-smoke/bin/python -m pip install dist/*.whl
           /tmp/hco-wheel-smoke/bin/hco --help
           /tmp/hco-wheel-smoke/bin/python -c "from huffman_cyber import __version__; print(__version__)"
+      - name: Smoke-test the source distribution in a clean environment
+        run: |
+          python -m venv /tmp/hco-sdist-smoke
+          /tmp/hco-sdist-smoke/bin/python -m pip install dist/*.tar.gz
+          /tmp/hco-sdist-smoke/bin/hco --help
+          /tmp/hco-sdist-smoke/bin/python -c "from huffman_cyber import __version__; print(__version__)"
