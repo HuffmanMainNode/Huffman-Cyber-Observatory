@@ -84,12 +84,26 @@ def _post_batch(queries: list[dict[str, Any]], timeout: float) -> tuple[dict[str
     return document, body, raw
 
 
+def _reported_component_version(component: dict[str, Any]) -> str:
+    """Return the SBOM version, falling back to a version embedded in its PURL."""
+    version = component.get("version")
+    if isinstance(version, str) and version:
+        return version
+    purl = component.get("purl")
+    if isinstance(purl, str):
+        package_path = purl.split("?", 1)[0].split("#", 1)[0].split("/", 1)[-1]
+        if "@" in package_path:
+            return package_path.rsplit("@", 1)[1]
+    return version if isinstance(version, str) else ""
+
 def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
     """Query OSV for components with usable PURLs and versions.
 
     The function is intentionally opt-in and makes no request for components
     that lack a usable package URL and version. Results are advisory leads.
     """
+    if not isinstance(sbom, dict):
+        raise ValueError("SBOM must be an object")
     components = sbom.get("components")
     if not isinstance(components, list):
         raise ValueError("SBOM components must be an array")
@@ -187,7 +201,7 @@ def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
                 "advisory_url": f"https://osv.dev/vulnerability/{advisory_id}",
                 "advisory_modified": advisory["modified"],
                 "component": component.get("name", "unknown"),
-                "version": component.get("version", ""),
+                "version": _reported_component_version(component),
                 "purl": component.get("purl"),
                 "match_type": "osv_package_version_query",
                 "exploitation_status": "not_determined_by_osv_querybatch",
