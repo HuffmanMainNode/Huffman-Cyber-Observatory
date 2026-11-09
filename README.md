@@ -84,7 +84,7 @@ This is an experimental defensive toolkit, not a certification or a substitute f
 2. Add NVD enrichment with source-specific provenance and rate-limit handling.
 3. Versioned CIS/NIST host configuration checks.
 4. Local stdio agent interface with strict path scoping.
-5. Signed release attestations, reproducible builds, and independent review.
+5. Reproducible builds, independent security review, and release-process hardening. GitHub build-provenance attestations are implemented; bit-for-bit reproducibility and independent review remain open.
 
 ## Sources
 
