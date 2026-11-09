@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from huffman_cyber.feeds.kev import fetch_kev
+from huffman_cyber.feeds import kev as kev_module
 
 
 class FakeResponse:
@@ -38,7 +39,7 @@ class FakeResponse:
 
 
 def test_feed_validation_and_provenance():
-    with patch("urllib.request.urlopen", return_value=FakeResponse()):
+    with patch("huffman_cyber.feeds.kev.open_https_no_redirect", return_value=FakeResponse()):
         result = fetch_kev()
     assert result["vulnerability_count"] == 1
     assert result["source_url"].startswith("https://www.cisa.gov/")

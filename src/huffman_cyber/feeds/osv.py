@@ -13,6 +13,8 @@ import urllib.request
 from datetime import UTC, datetime
 from typing import Any
 
+from .http import open_https_no_redirect
+
 OSV_QUERY_URL = "https://api.osv.dev/v1/querybatch"
 MAX_COMPONENTS = 1000
 BATCH_SIZE = 100
@@ -30,6 +32,8 @@ def _query_for_component(component: dict[str, Any]) -> dict[str, Any] | None:
         return None
     if len(purl) > 2048 or any(ord(char) < 0x21 or ord(char) > 0x7E for char in purl):
         return None
+    if version is not None and not isinstance(version, str):
+        return None
     # A versioned PURL already carries its version. OSV rejects a second,
     # top-level version field when both are supplied.
     purl_without_qualifiers = purl.split("?", 1)[0].split("#", 1)[0]
@@ -40,6 +44,8 @@ def _query_for_component(component: dict[str, Any]) -> dict[str, Any] | None:
     if "@" in package_path:
         embedded_version = package_path.rsplit("@", 1)[1]
         if not embedded_version or len(embedded_version) > 256:
+            return None
+        if version and version != embedded_version:
             return None
     else:
         if not isinstance(version, str) or not version.strip():
@@ -62,10 +68,7 @@ def _post_batch(queries: list[dict[str, Any]], timeout: float) -> tuple[dict[str
         },
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
-        final_url = response.geturl()
-        if final_url != OSV_QUERY_URL:
-            raise ValueError("OSV request redirected to an unexpected endpoint")
+    with open_https_no_redirect(request, timeout=timeout) as response:
         if response.status != 200:
             raise RuntimeError(f"OSV API returned HTTP {response.status}")
         raw = response.read(MAX_RESPONSE_BYTES + 1)
@@ -118,7 +121,7 @@ def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
     }
     request_hashes: list[str] = []
     response_hashes: list[str] = []
-    complete = True
+    complete = not skipped
     total_response_bytes = 0
     total_requests = 0
 
@@ -203,6 +206,7 @@ def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
         "request_sha256": request_hashes,
         "response_sha256": response_hashes,
         "limitations": [
+            "Components without usable package URLs and versions are skipped and make the result incomplete.",
             "Only components with usable package URLs and versions are queried.",
             "OSV querybatch returns advisory identifiers and modification timestamps, not full severity or remediation details.",
             "A package-version match does not prove vulnerable code is present, reachable, or exploitable.",

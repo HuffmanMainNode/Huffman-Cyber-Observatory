@@ -35,7 +35,7 @@ def test_query_uses_versionless_purl_and_version_field():
     response = FakeResponse(json.dumps({"results": [{"vulns": [
         {"id": "GHSA-abcd-1234", "modified": "2026-01-01T00:00:00Z"}
     ]}]}).encode())
-    with patch("urllib.request.urlopen", return_value=response) as urlopen:
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect", return_value=response) as urlopen:
         result = query_osv(_sbom([
             {"name": "demo", "version": "1.2.3", "purl": "pkg:pypi/demo"}
         ]))
@@ -154,3 +154,25 @@ def test_malformed_purl_is_skipped_without_network_call():
     urlopen.assert_not_called()
     assert result["queried_package_count"] == 0
     assert len(result["skipped_components"]) == 1
+
+
+
+def test_conflicting_purl_and_component_versions_are_skipped():
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect") as opener:
+        result = query_osv(_sbom([{
+            "name": "demo",
+            "version": "2.0.0",
+            "purl": "pkg:pypi/demo@1.0.0",
+        }]))
+    opener.assert_not_called()
+    assert result["complete"] is False
+    assert result["queried_package_count"] == 0
+    assert len(result["skipped_components"]) == 1
+
+
+def test_all_skipped_components_do_not_look_like_a_clean_complete_scan():
+    with patch("huffman_cyber.feeds.osv.open_https_no_redirect") as opener:
+        result = query_osv(_sbom([{"name": "unknown", "version": "", "purl": ""}]))
+    opener.assert_not_called()
+    assert result["complete"] is False
+    assert result["finding_count"] == 0

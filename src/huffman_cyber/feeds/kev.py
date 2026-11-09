@@ -8,7 +8,8 @@ import urllib.request
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+
+from .http import open_https_no_redirect
 
 FEED_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 MAX_FEED_BYTES = 20 * 1024 * 1024
@@ -23,10 +24,7 @@ def fetch_kev(timeout: float = 20.0) -> dict[str, Any]:
         headers={"User-Agent": "HuffmanCyberObservatory/0.1.0 (+defensive-security)"},
     )
     # The URL is a fixed, code-owned HTTPS endpoint, not user-supplied input.
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
-        final = urlsplit(response.geturl())
-        if final.scheme != "https" or final.hostname not in {"cisa.gov", "www.cisa.gov"}:
-            raise ValueError("CISA feed redirected to an unexpected endpoint")
+    with open_https_no_redirect(request, timeout=timeout) as response:
         if response.status != 200:
             raise RuntimeError(f"CISA feed returned HTTP {response.status}")
         raw = response.read(MAX_FEED_BYTES + 1)
