@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: HuffmanMainNode/Open-Intelligence-Exchange
-          ref: f2c2326675bf881b6195c5f761b628da6579fe38
+          ref: 2637d90ba8ba3e21d4841109312384650fbe8529
           path: Open-Intelligence-Exchange
           persist-credentials: false
       - name: Set up Python

@@ -129,3 +129,28 @@ def test_component_and_timeout_limits():
         query_osv(_sbom([{}] * 1001))
     with pytest.raises(ValueError, match="timeout"):
         query_osv(_sbom([]), timeout=0)
+
+
+
+def test_purl_qualifiers_and_subpath_are_not_transmitted():
+    response = FakeResponse(b'{"results":[{"vulns":[]}]}')
+    with patch("urllib.request.urlopen", return_value=response) as urlopen:
+        query_osv(_sbom([{
+            "name": "demo",
+            "version": "1.2.3",
+            "purl": "pkg:pypi/demo@1.2.3?repository_url=https://private.invalid#src",
+        }]))
+    sent = json.loads(urlopen.call_args.args[0].data)
+    assert sent["queries"] == [{"package": {"purl": "pkg:pypi/demo@1.2.3"}}]
+
+
+def test_malformed_purl_is_skipped_without_network_call():
+    with patch("urllib.request.urlopen") as urlopen:
+        result = query_osv(_sbom([{
+            "name": "bad",
+            "version": "1.0",
+            "purl": "pkg:not-a-valid-package-url",
+        }]))
+    urlopen.assert_not_called()
+    assert result["queried_package_count"] == 0
+    assert len(result["skipped_components"]) == 1

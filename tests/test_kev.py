@@ -1,6 +1,8 @@
 import json
 from unittest.mock import patch
 
+import pytest
+
 from huffman_cyber.feeds.kev import fetch_kev
 
 
@@ -50,7 +52,6 @@ def test_feed_rejects_invalid_cve_id():
         "vulnerabilities": [{"cveID": "CVE-not-valid", "dateAdded": "2026-01-01"}],
     }).encode()
     with patch("urllib.request.urlopen", return_value=response):
-        import pytest
         with pytest.raises(ValueError, match="invalid CVE ID"):
             fetch_kev()
 
