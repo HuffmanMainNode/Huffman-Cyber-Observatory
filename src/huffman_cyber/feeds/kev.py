@@ -24,7 +24,10 @@ def fetch_kev(timeout: float = 20.0) -> dict[str, Any]:
         headers={"User-Agent": "HuffmanCyberObservatory/0.1.0 (+defensive-security)"},
     )
     # The URL is a fixed, code-owned HTTPS endpoint, not user-supplied input.
-    with open_https_no_redirect(request, timeout=timeout) as response:
+    with open_https_no_redirect(request, timeout=timeout, allowed_host="www.cisa.gov") as response:
+        final = urlsplit(response.geturl())
+        if final.scheme != "https" or final.hostname not in {"cisa.gov", "www.cisa.gov"}:
+            raise ValueError("CISA feed returned an unexpected endpoint")
         if response.status != 200:
             raise RuntimeError(f"CISA feed returned HTTP {response.status}")
         raw = response.read(MAX_FEED_BYTES + 1)

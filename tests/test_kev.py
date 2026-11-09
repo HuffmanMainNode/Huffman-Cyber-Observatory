@@ -4,7 +4,6 @@ from unittest.mock import patch
 import pytest
 
 from huffman_cyber.feeds.kev import fetch_kev
-from huffman_cyber.feeds import kev as kev_module
 
 
 class FakeResponse:

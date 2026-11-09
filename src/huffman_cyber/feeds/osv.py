@@ -68,7 +68,9 @@ def _post_batch(queries: list[dict[str, Any]], timeout: float) -> tuple[dict[str
         },
         method="POST",
     )
-    with open_https_no_redirect(request, timeout=timeout) as response:
+    with open_https_no_redirect(request, timeout=timeout, allowed_host="api.osv.dev") as response:
+        if response.geturl() != OSV_QUERY_URL:
+            raise ValueError("OSV request returned an unexpected endpoint")
         if response.status != 200:
             raise RuntimeError(f"OSV API returned HTTP {response.status}")
         raw = response.read(MAX_RESPONSE_BYTES + 1)
