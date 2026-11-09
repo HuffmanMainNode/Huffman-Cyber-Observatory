@@ -123,7 +123,8 @@ def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
     }
     request_hashes: list[str] = []
     response_hashes: list[str] = []
-    complete = not skipped
+    # An empty SBOM cannot support a meaningful 'complete' advisory assessment.
+    complete = bool(unique_queries) and not skipped
     total_response_bytes = 0
     total_requests = 0
 
