@@ -4,6 +4,12 @@ All notable changes to Huffman Cyber Observatory are recorded here. This project
 
 ## 0.1.0 - Unreleased
 
+- Add bounded, opt-in OSV.dev package-version advisory queries with provenance hashes and explicit disclosure boundaries.
+- Bound SBOM input size and component counts; reject malformed component records and duplicate CycloneDX references.
+- Strengthen CISA KEV feed validation, date/count consistency checks, and redirect destination checks.
+- Refresh the pinned OIX interoperability test dependency after reviewing upstream compatibility changes.
+- Run pip-audit in CI and modernize SPDX license metadata for current setuptools.
+
 - Add local secrets-candidate scanning with mandatory evidence redaction.
 - Add scan coverage accounting and expanded private-key/token patterns.
 - Add CycloneDX/SPDX JSON SBOM inventory and explicit-CVE correlation against a saved CISA KEV snapshot.

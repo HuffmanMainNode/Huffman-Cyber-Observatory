@@ -1,6 +1,8 @@
 import json
 
-from huffman_cyber.sbom import correlate_kev, load_sbom
+import pytest
+
+from huffman_cyber.sbom import MAX_SBOM_BYTES, correlate_kev, load_sbom
 
 
 def test_load_cyclonedx_inventory(tmp_path):
@@ -39,3 +41,40 @@ def test_kev_correlation_only_matches_explicit_cves():
     result = correlate_kev(sbom, kev)
     assert result["finding_count"] == 1
     assert result["findings"][0]["requires_manual_triage"] is True
+
+
+def test_oversized_sbom_is_rejected(tmp_path):
+    source = tmp_path / "oversized.json"
+    source.write_bytes(b" " * (MAX_SBOM_BYTES + 1))
+    with pytest.raises(ValueError, match="size limit"):
+        load_sbom(source)
+
+
+def test_malformed_component_is_not_silently_skipped(tmp_path):
+    source = tmp_path / "malformed.json"
+    source.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [None]}))
+    with pytest.raises(ValueError, match="must be an object"):
+        load_sbom(source)
+
+
+def test_non_string_package_fields_are_rejected(tmp_path):
+    source = tmp_path / "malformed.json"
+    source.write_text(json.dumps({
+        "bomFormat": "CycloneDX",
+        "components": [{"name": {"unexpected": "object"}, "version": "1"}],
+    }))
+    with pytest.raises(ValueError, match="must be a string"):
+        load_sbom(source)
+
+
+def test_duplicate_bom_refs_are_rejected(tmp_path):
+    source = tmp_path / "duplicate.json"
+    source.write_text(json.dumps({
+        "bomFormat": "CycloneDX",
+        "components": [
+            {"bom-ref": "same", "name": "first"},
+            {"bom-ref": "same", "name": "second"},
+        ],
+    }))
+    with pytest.raises(ValueError, match="duplicate"):
+        load_sbom(source)

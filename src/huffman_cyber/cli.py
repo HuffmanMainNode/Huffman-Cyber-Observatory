@@ -15,6 +15,7 @@ from huffman_cyber.crypto import (
     verify_signature,
 )
 from huffman_cyber.feeds.kev import save_kev
+from huffman_cyber.feeds.osv import query_osv
 from huffman_cyber.integrity import create_manifest, verify_manifest, write_json
 from huffman_cyber.report import report
 from huffman_cyber.sbom import correlate_kev, load_sbom
@@ -53,6 +54,13 @@ def build_parser() -> argparse.ArgumentParser:
     correlate.add_argument("source")
     correlate.add_argument("kev_snapshot")
     correlate.add_argument("--output", default="sbom-kev-report.json")
+    osv = sbom_sub.add_parser(
+        "osv-correlate",
+        help="opt in to sending component package URLs and versions to OSV.dev",
+    )
+    osv.add_argument("source")
+    osv.add_argument("--output", default="sbom-osv-report.json")
+    osv.add_argument("--timeout", type=float, default=20.0)
 
     for name, help_text in (
         ("encrypt", "encrypt a file with AES-256-GCM"),
@@ -117,6 +125,15 @@ def main() -> None:
             result = correlate_kev(inventory_data, kev_data)
             write_json(args.output, result)
             print(f"Found {result['finding_count']} explicit KEV match(es): {args.output}")
+        elif args.command == "sbom" and args.sbom_command == "osv-correlate":
+            inventory_data = load_sbom(args.source)
+            result = query_osv(inventory_data, timeout=args.timeout)
+            write_json(args.output, result)
+            state = "complete" if result["complete"] else "partial; pagination limit reached"
+            print(
+                f"Found {result['finding_count']} OSV advisory match(es) "
+                f"({state}); report saved to {args.output}"
+            )
         elif args.command in {"encrypt", "decrypt"}:
             password = getpass.getpass("Passphrase (minimum 12 bytes): ").encode()
             source = Path(args.source).read_bytes()

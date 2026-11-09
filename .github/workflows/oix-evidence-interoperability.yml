@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: HuffmanMainNode/Open-Intelligence-Exchange
-          ref: f2c2326675bf881b6195c5f761b628da6579fe38
+          ref: 2637d90ba8ba3e21d4841109312384650fbe8529
           path: Open-Intelligence-Exchange
           persist-credentials: false
       - name: Set up Python
@@ -37,9 +37,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install OIX and Cyber Observatory
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip "setuptools>=84.1.0" wheel
           python -m pip install -e ./Open-Intelligence-Exchange
           python -m pip install -e ".[dev]"
+      - name: Audit combined OIX and HCO dependencies
+        run: pip-audit --skip-editable
       - name: Run OIX bridge tests
         run: pytest tests/test_oix_bridge.py
       - name: Run synthetic SBOM evidence demonstration

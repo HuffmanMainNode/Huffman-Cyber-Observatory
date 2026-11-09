@@ -1,7 +1,7 @@
-"""Minimal, dependency-free SBOM inventory and CISA KEV correlation.
+"""Bounded SBOM inventory and explicit CISA KEV correlation.
 
-Supports CycloneDX JSON and SPDX JSON. This is inventory matching, not a full
-package-manager resolver or proof that a component is exploitable.
+Supports CycloneDX JSON and SPDX JSON. Version-aware advisory queries are
+implemented separately and must be explicitly invoked by the operator.
 """
 from __future__ import annotations
 
@@ -9,46 +9,63 @@ import json
 from pathlib import Path
 from typing import Any
 
+MAX_SBOM_BYTES = 10 * 1024 * 1024
+MAX_SBOM_COMPONENTS = 10_000
+
+
+def _string_field(record: dict[str, Any], field: str, default: str = "") -> str:
+    value = record.get(field, default)
+    if not isinstance(value, str):
+        raise ValueError(f"SBOM field {field!r} must be a string")
+    return value
+
 
 def _cyclonedx(document: dict[str, Any]) -> list[dict[str, Any]]:
     components = document.get("components", [])
     if not isinstance(components, list):
         raise ValueError("CycloneDX components must be an array")
+    if len(components) > MAX_SBOM_COMPONENTS:
+        raise ValueError(f"SBOM exceeds {MAX_SBOM_COMPONENTS} components")
     records: list[dict[str, Any]] = []
     by_ref: dict[str, dict[str, Any]] = {}
-    for component in components:
+    for index, component in enumerate(components):
         if not isinstance(component, dict):
-            continue
+            raise ValueError(f"CycloneDX component {index} must be an object")
         record = {
-            "name": str(component.get("name", "unknown")),
-            "version": str(component.get("version", "")),
-            "purl": str(component.get("purl", "")),
-            "cpe": str(component.get("cpe", "")),
-            "bom_ref": str(component.get("bom-ref", "")),
+            "name": _string_field(component, "name", "unknown"),
+            "version": _string_field(component, "version"),
+            "purl": _string_field(component, "purl"),
+            "cpe": _string_field(component, "cpe"),
+            "bom_ref": _string_field(component, "bom-ref"),
             "cve_ids": [],
             "source_type": "cyclonedx",
         }
         records.append(record)
         if record["bom_ref"]:
+            if record["bom_ref"] in by_ref:
+                raise ValueError(f"duplicate CycloneDX bom-ref: {record['bom_ref']}")
             by_ref[record["bom_ref"]] = record
 
     vulnerabilities = document.get("vulnerabilities", [])
     if not isinstance(vulnerabilities, list):
         raise ValueError("CycloneDX vulnerabilities must be an array")
-    for vulnerability in vulnerabilities:
+    for index, vulnerability in enumerate(vulnerabilities):
         if not isinstance(vulnerability, dict):
-            continue
+            raise ValueError(f"CycloneDX vulnerability {index} must be an object")
         cve_id = vulnerability.get("id")
+        if cve_id is not None and not isinstance(cve_id, str):
+            raise ValueError("CycloneDX vulnerability id must be a string")
         if not isinstance(cve_id, str) or not cve_id.startswith("CVE-"):
             continue
         affects = vulnerability.get("affects", [])
         if not isinstance(affects, list):
-            continue
+            raise ValueError("CycloneDX vulnerability affects must be an array")
         for affected in affects:
-            if isinstance(affected, dict):
-                target = by_ref.get(str(affected.get("ref", "")))
-                if target is not None:
-                    target["cve_ids"].append(cve_id)
+            if not isinstance(affected, dict):
+                raise ValueError("CycloneDX affected component reference must be an object")
+            target = by_ref.get(_string_field(affected, "ref"))
+            if target is not None:
+                target["cve_ids"].append(cve_id)
     for record in records:
         record["cve_ids"] = sorted(set(record["cve_ids"]))
     return records
@@ -58,29 +75,32 @@ def _spdx(document: dict[str, Any]) -> list[dict[str, Any]]:
     packages = document.get("packages", [])
     if not isinstance(packages, list):
         raise ValueError("SPDX packages must be an array")
+    if len(packages) > MAX_SBOM_COMPONENTS:
+        raise ValueError(f"SBOM exceeds {MAX_SBOM_COMPONENTS} components")
     records: list[dict[str, Any]] = []
-    for package in packages:
+    for index, package in enumerate(packages):
         if not isinstance(package, dict):
-            continue
+            raise ValueError(f"SPDX package {index} must be an object")
         refs = package.get("externalRefs", [])
+        if not isinstance(refs, list):
+            raise ValueError("SPDX externalRefs must be an array")
         purl = ""
         cpe = ""
         cve_ids: list[str] = []
-        if isinstance(refs, list):
-            for ref in refs:
-                if not isinstance(ref, dict):
-                    continue
-                locator = str(ref.get("referenceLocator", ""))
-                category = str(ref.get("referenceCategory", "")).lower()
-                if locator.startswith("pkg:"):
-                    purl = locator
-                if "cpe" in category or locator.startswith("cpe:"):
-                    cpe = locator
-                if locator.startswith("CVE-"):
-                    cve_ids.append(locator)
+        for ref in refs:
+            if not isinstance(ref, dict):
+                raise ValueError("SPDX external reference must be an object")
+            locator = _string_field(ref, "referenceLocator")
+            category = _string_field(ref, "referenceCategory").lower()
+            if locator.startswith("pkg:"):
+                purl = locator
+            if "cpe" in category or locator.startswith("cpe:"):
+                cpe = locator
+            if locator.startswith("CVE-"):
+                cve_ids.append(locator)
         records.append({
-            "name": str(package.get("name", "unknown")),
-            "version": str(package.get("versionInfo", "")),
+            "name": _string_field(package, "name", "unknown"),
+            "version": _string_field(package, "versionInfo"),
             "purl": purl,
             "cpe": cpe,
             "cve_ids": sorted(set(cve_ids)),
@@ -91,10 +111,17 @@ def _spdx(document: dict[str, Any]) -> list[dict[str, Any]]:
 
 def load_sbom(path: str | Path) -> dict[str, Any]:
     source = Path(path).expanduser().resolve(strict=True)
-    document = json.loads(source.read_text(encoding="utf-8"))
+    if not source.is_file():
+        raise ValueError("SBOM source must be a regular file")
+    if source.stat().st_size > MAX_SBOM_BYTES:
+        raise ValueError(f"SBOM exceeds configured size limit ({MAX_SBOM_BYTES} bytes)")
+    raw = source.read_bytes()
+    if len(raw) > MAX_SBOM_BYTES:
+        raise ValueError(f"SBOM exceeds {MAX_SBOM_BYTES} byte safety limit")
+    document = json.loads(raw)
     if not isinstance(document, dict):
         raise ValueError("SBOM root must be a JSON object")
-    if "bomFormat" in document and document.get("bomFormat") == "CycloneDX":
+    if document.get("bomFormat") == "CycloneDX":
         records = _cyclonedx(document)
         kind = "CycloneDX"
     elif "spdxVersion" in document:
