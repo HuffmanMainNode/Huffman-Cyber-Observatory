@@ -4,6 +4,9 @@ All notable changes to Huffman Cyber Observatory are recorded here. This project
 
 ## 0.1.0 - Unreleased
 
+- Preserve package versions embedded in PURLs in OSV findings; reject invalid top-level SBOM input with clear errors.
+- Build wheel and source distributions in CI and verify independent installation of both artifacts in clean virtual environments.
+- Separate runtime installation instructions from contributor-only development dependencies.
 - Add bounded, opt-in OSV.dev package-version advisory queries with provenance hashes and explicit disclosure boundaries.
 - Bound SBOM input size and component counts; reject malformed component records and duplicate CycloneDX references.
 - Strengthen CISA KEV feed validation, date/count consistency checks, and redirect destination checks.
