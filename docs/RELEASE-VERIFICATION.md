@@ -1,9 +1,7 @@
 # Release artifact verification
 
 Huffman Cyber Observatory release builds are created from version tags by
-`.github/workflows/release-artifacts.yml`. The workflow builds a wheel and
-source distribution, writes a SHA-256 manifest, creates GitHub build-provenance
-attestations, and verifies those attestations before uploading the artifacts.
+`.github/workflows/release-artifacts.yml`. Two independent GitHub-hosted runner jobs build the wheel and source distribution with pinned build tooling and a normalized source epoch. A verification job requires byte-identical artifact inventories and bytes before writing a SHA-256 manifest, creating GitHub build-provenance attestations, verifying those attestations, and uploading the artifacts.
 
 The workflow does **not** publish a GitHub Release, upload to PyPI, or deploy a
 service. A maintainer must separately review and authorize any public release.
@@ -44,9 +42,10 @@ attestation as a security audit of the source code.
 
 ## Reproducibility and trust boundaries
 
-- Build provenance identifies the source revision and GitHub Actions workflow
-  that produced the artifact; it does not by itself prove bit-for-bit
-  reproducibility.
+- The release workflow normalizes source-archive ownership and timestamps, then
+  checks byte-for-byte equality between two separate GitHub-hosted runner builds.
+  This is a reproducibility check within one release workflow, not an independent
+  third-party rebuild.
 - The SHA-256 manifest detects accidental or malicious artifact changes only
   when the manifest itself is obtained through a trusted channel.
 - Prefer verifying both the manifest and each artifact's attestation.

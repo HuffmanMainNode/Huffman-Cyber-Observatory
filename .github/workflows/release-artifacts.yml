@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  pull_request:
+    paths:
+      - "pyproject.toml"
+      - ".github/workflows/release-artifacts.yml"
+      - "src/**"
+      - "tests/**"
 
 permissions:
   contents: read
@@ -15,8 +21,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-attest:
+  reproducible-build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [one, two]
     steps:
       - name: Check out tagged source
         uses: actions/checkout@v7
@@ -28,10 +38,63 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build wheel and source distribution
+      - name: Build with pinned tooling and normalized source epoch
         run: |
-          python -m pip install --upgrade pip build
-          python -m build
+          python -m pip install build==1.2.2.post1 setuptools==84.1.0 wheel==0.45.1
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$GITHUB_SHA")"
+          python -m build --no-isolation --outdir dist
+          python tools/normalize_sdist.py dist/*.tar.gz --epoch "$SOURCE_DATE_EPOCH"
+
+      - name: Upload independent build
+        uses: actions/upload-artifact@v7
+        with:
+          name: hco-repro-${{ matrix.replica }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  verify-and-attest:
+    needs: reproducible-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Download independent build one
+        uses: actions/download-artifact@v7
+        with:
+          name: hco-repro-one
+          path: build-one
+
+      - name: Download independent build two
+        uses: actions/download-artifact@v7
+        with:
+          name: hco-repro-two
+          path: build-two
+
+      - name: Require byte-identical artifacts
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          first = {p.name: p for p in Path("build-one").iterdir() if p.is_file()}
+          second = {p.name: p for p in Path("build-two").iterdir() if p.is_file()}
+          if not first or first.keys() != second.keys():
+              raise SystemExit("Independent builds produced different artifact inventories")
+          for name in sorted(first):
+              left = first[name].read_bytes()
+              right = second[name].read_bytes()
+              left_hash = sha256(left).hexdigest()
+              right_hash = sha256(right).hexdigest()
+              print(f"{name}: build-one={left_hash} build-two={right_hash}")
+              if left != right:
+                  raise SystemExit(f"Non-reproducible artifact: {name}")
+          PY
+          mkdir -p dist
+          cp build-one/* dist/
 
       - name: Generate SHA-256 manifest
         run: |
@@ -45,7 +108,6 @@ jobs:
           )
           if not artifacts:
               raise SystemExit("No release artifacts were produced")
-
           manifest = "".join(
               f"{sha256(path.read_bytes()).hexdigest()}  {path.name}\n"
               for path in artifacts
@@ -54,6 +116,7 @@ jobs:
           PY
 
       - name: Generate GitHub build provenance attestations
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
@@ -62,6 +125,7 @@ jobs:
             dist/SHA256SUMS.txt
 
       - name: Verify generated attestations
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -73,7 +137,7 @@ jobs:
       - name: Upload release artifacts and checksum manifest
         uses: actions/upload-artifact@v7
         with:
-          name: hco-release-${{ github.ref_name }}
+          name: hco-release-${{ github.run_id }}
           path: dist/*
           if-no-files-found: error
           retention-days: 90
