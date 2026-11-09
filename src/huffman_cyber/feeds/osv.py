@@ -210,7 +210,10 @@ def query_osv(sbom: dict[str, Any], timeout: float = 20.0) -> dict[str, Any]:
         "limitations": [
             "Components without usable package URLs and versions are skipped and make the result incomplete.",
             "Only components with usable package URLs and versions are queried.",
-            "OSV querybatch returns advisory identifiers and modification timestamps, not full severity or remediation details.",
+            (
+                "OSV querybatch returns advisory identifiers and modification timestamps, "
+                "not full severity or remediation details."
+            ),
             "A package-version match does not prove vulnerable code is present, reachable, or exploitable.",
             "OSV coverage depends on the advisories and ecosystems represented in OSV.dev.",
             "A clean result or incomplete query is not proof that dependencies are vulnerability-free.",
