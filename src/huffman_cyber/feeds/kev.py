@@ -3,15 +3,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import urllib.request
 from datetime import UTC, date, datetime
-from urllib.parse import urlsplit
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 FEED_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 MAX_FEED_BYTES = 20 * 1024 * 1024
-CVE_ID_PATTERN = __import__("re").compile(r"^CVE-\\d{4}-\\d{4,}$")
+CVE_ID_PATTERN = re.compile(r"^CVE-\d{4}-\d{4,}$")
 
 
 def fetch_kev(timeout: float = 20.0) -> dict[str, Any]:

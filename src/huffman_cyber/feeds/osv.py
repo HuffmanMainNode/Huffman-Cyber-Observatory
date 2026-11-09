@@ -33,12 +33,18 @@ def _query_for_component(component: dict[str, Any]) -> dict[str, Any] | None:
     # A versioned PURL already carries its version. OSV rejects a second,
     # top-level version field when both are supplied.
     purl_without_qualifiers = purl.split("?", 1)[0].split("#", 1)[0]
+    if not re.fullmatch(r"pkg:[a-z0-9.+-]+/.+", purl_without_qualifiers):
+        return None
     package_path = purl_without_qualifiers.split("/", 1)[-1]
     query: dict[str, Any] = {"package": {"purl": purl_without_qualifiers}}
-    if "@" not in package_path:
+    if "@" in package_path:
+        embedded_version = package_path.rsplit("@", 1)[1]
+        if not embedded_version or len(embedded_version) > 256:
+            return None
+    else:
         if not isinstance(version, str) or not version.strip():
             return None
-        if len(version) > 256 or any(ord(char) < 0x20 for char in version):
+        if len(version) > 256 or any(char.isspace() for char in version):
             return None
         query["version"] = version
     return query
@@ -52,7 +58,7 @@ def _post_batch(queries: list[dict[str, Any]], timeout: float) -> tuple[dict[str
         headers={
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "HuffmanCyberObservatory/0.2 (+defensive-security)",
+            "User-Agent": "HuffmanCyberObservatory/0.1.0 (+defensive-security)",
         },
         method="POST",
     )
