@@ -4,6 +4,8 @@ All notable changes to Huffman Cyber Observatory are recorded here. This project
 
 ## 0.1.0 - Unreleased
 
+- Add a tag-triggered release build that generates SHA-256 manifests and GitHub build-provenance attestations, verifies attestations, and uploads workflow artifacts without publishing a package or GitHub Release.
+
 - Preserve package versions embedded in PURLs in OSV findings; reject invalid top-level SBOM input with clear errors.
 - Build wheel and source distributions in CI and verify independent installation of both artifacts in clean virtual environments.
 - Separate runtime installation instructions from contributor-only development dependencies.
