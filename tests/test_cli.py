@@ -1,5 +1,6 @@
 import json
 import sys
+from unittest.mock import patch
 
 import pytest
 
@@ -59,6 +60,29 @@ def test_sbom_cli_inventory_and_kev_correlation(tmp_path, monkeypatch, capsys):
     result = json.loads(report_path.read_text(encoding="utf-8"))
     assert result["finding_count"] == 1
     assert "Found 1 explicit KEV match" in capsys.readouterr().out
+
+
+def test_sbom_osv_cli_is_explicit_opt_in(tmp_path, monkeypatch, capsys):
+    source = tmp_path / "sample.json"
+    output = tmp_path / "osv-report.json"
+    source.write_text(json.dumps({
+        "bomFormat": "CycloneDX",
+        "components": [{"name": "demo", "version": "1.0", "purl": "pkg:pypi/demo"}],
+    }))
+    result = {
+        "finding_count": 1,
+        "complete": True,
+        "findings": [{"advisory_id": "CVE-2026-1234"}],
+    }
+    with patch("huffman_cyber.cli.query_osv", return_value=result) as query:
+        monkeypatch.setattr(
+            sys, "argv",
+            ["hco", "sbom", "osv-correlate", str(source), "--output", str(output)],
+        )
+        main()
+    query.assert_called_once()
+    assert json.loads(output.read_text())["finding_count"] == 1
+    assert "OSV advisory match" in capsys.readouterr().out
 
 
 def test_encrypt_cli_refuses_to_overwrite_destination(tmp_path, monkeypatch):

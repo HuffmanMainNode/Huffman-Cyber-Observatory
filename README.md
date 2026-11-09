@@ -12,6 +12,7 @@ Open-source defensive security tooling for local-first assessment, vulnerability
 - AES-256-GCM authenticated file encryption using scrypt-derived keys.
 - Ed25519 file signing and verification.
 - CycloneDX/SPDX JSON SBOM inventory and explicit-CVE correlation against a saved CISA KEV snapshot.
+- Optional, operator-invoked OSV.dev package-version advisory queries with request/response hashes and bounded input/output.
 - Versioned JSON reports, tests, and minimal-permission CI.
 
 ## Onboarding
@@ -45,6 +46,8 @@ hco sign signing-key.pem release.tar.gz --output release.sig.json
 hco verify-signature signing-key.pub release.tar.gz release.sig.json
 hco sbom inventory bom.cdx.json --output inventory.json
 hco sbom correlate bom.cdx.json kev-snapshot.json --output sbom-kev-report.json
+# Explicitly contacts OSV.dev with package URLs and versions, not the raw SBOM:
+hco sbom osv-correlate bom.cdx.json --output sbom-osv-report.json
 ```
 
 ## Safety boundaries
@@ -52,26 +55,28 @@ hco sbom correlate bom.cdx.json kev-snapshot.json --output sbom-kev-report.json
 - Assess only files, devices, and systems you own or are explicitly authorized to assess.
 - Filesystem scanning is local and read-only. File contents are not uploaded; secret values are never printed or stored in reports.
 - The KEV command contacts only the documented CISA feed over HTTPS.
+- OSV queries are a separate opt-in command. Only component package URLs and versions are sent; raw SBOM contents and local file paths are not transmitted. The query count, request timeout, and response size are bounded.
 - No exploit execution, persistence, stealth, credential validation, lateral movement, destructive testing, or arbitrary-target scanning.
 - Cryptographic operations use established primitives from the maintained `cryptography` library.
 - The initial encryption implementation buffers complete files and enforces a 64 MiB limit. It is not a streaming format.
 
 ## Limitations
 
-This is an experimental defensive toolkit, not a certification or a substitute for a professional assessment. Secret detection is heuristic and has false positives and false negatives. Reports include files scanned and files skipped by reason, but a clean scan is not proof of security. KEV is one intelligence source, not a complete vulnerability database. Private-key files are created with POSIX mode 0600 where supported; Windows does not enforce POSIX mode bits.
+This is an experimental defensive toolkit, not a certification or a substitute for a professional assessment. Secret detection is heuristic and has false positives and false negatives. Reports include files scanned and files skipped by reason, but a clean scan is not proof of security. KEV is one intelligence source, not a complete vulnerability database. OSV querybatch returns advisory identifiers and modification timestamps, not severity or remediation details. A package-version advisory match does not prove vulnerable code is present, reachable, or exploitable. Package URLs and versions can reveal software inventory and should be treated as potentially sensitive. Private-key files are created with POSIX mode 0600 where supported; Windows does not enforce POSIX mode bits.
 
 ## Roadmap
 
-1. Version-aware OSV and NVD advisory enrichment beyond explicit CVE-to-KEV correlation.
-2. Versioned CIS/NIST host configuration checks.
-3. Local stdio agent interface with strict path scoping.
-4. Signed release attestations, reproducible builds, and independent review.
+1. Enrich OSV advisory IDs with carefully bounded advisory details and remediation metadata.
+2. Add NVD enrichment with source-specific provenance and rate-limit handling.
+3. Versioned CIS/NIST host configuration checks.
+4. Local stdio agent interface with strict path scoping.
+5. Signed release attestations, reproducible builds, and independent review.
 
 ## Sources
 
 - CISA KEV: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
 - NIST NVD: https://nvd.nist.gov/developers/vulnerabilities
-- OSV: https://osv.dev/
+- OSV API: https://google.github.io/osv.dev/api/
 - OWASP ASVS: https://owasp.org/www-project-application-security-verification-standard/
 - CIS Benchmarks: https://www.cisecurity.org/cis-benchmarks
 
