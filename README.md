@@ -40,7 +40,7 @@ pytest
 For reproducible agent or deployment installs, pin the verified repository revision instead of following the moving `main` branch:
 
 ```bash
-python -m pip install "git+https://github.com/HuffmanMainNode/Huffman-Cyber-Observatory.git@542bfdc32cf460415a95e1c78bb0ac2001494b77"
+python -m pip install "git+https://github.com/HuffmanMainNode/Huffman-Cyber-Observatory.git@d7ea2d27bea7829abdd663675d76e4ab1a7ee734"
 hco --help
 ```
 
