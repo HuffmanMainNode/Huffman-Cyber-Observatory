@@ -41,6 +41,6 @@ jobs:
       - name: Smoke-test immutable Git installation
         run: |
           python -m venv /tmp/hco-git-smoke
-          /tmp/hco-git-smoke/bin/python -m pip install "git+https://github.com/HuffmanMainNode/Huffman-Cyber-Observatory.git@542bfdc32cf460415a95e1c78bb0ac2001494b77"
+          /tmp/hco-git-smoke/bin/python -m pip install "git+https://github.com/HuffmanMainNode/Huffman-Cyber-Observatory.git@d7ea2d27bea7829abdd663675d76e4ab1a7ee734"
           /tmp/hco-git-smoke/bin/hco --help
           /tmp/hco-git-smoke/bin/python -c "from huffman_cyber import __version__; print(__version__)"
