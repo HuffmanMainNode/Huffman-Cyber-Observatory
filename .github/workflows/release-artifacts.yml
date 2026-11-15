@@ -63,13 +63,13 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Download independent build one
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: hco-repro-one
           path: build-one
 
       - name: Download independent build two
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: hco-repro-two
           path: build-two
